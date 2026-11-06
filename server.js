@@ -74,6 +74,11 @@ io.on('connection', (socket) => {
   //   y vuelve a mandar la lista de 'usuarios'.
   socket.on('disconnect', () => {
     console.log('Se desconectó:', socket.id);
+    const nombre = usuarios.get(socket.id);
+    if (!nombre) return;
+    usuarios.delete(socket.id); // se borra por socket.id, no por nombre
+    io.emit('sistema', `${nombre} salió del chat`);
+    io.emit('usuarios', [...usuarios.values()]);
   });
 });
 
