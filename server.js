@@ -62,6 +62,11 @@ io.on('connection', (socket) => {
 
   // TODO 3 — Escuchar 'escribiendo' y avisar SOLO a los demás
   //   (pista: socket.broadcast.emit, no io.emit).
+  socket.on('escribiendo', () => {
+    const autor = usuarios.get(socket.id);
+    if (!autor) return;
+    socket.broadcast.emit('escribiendo', autor); // todos menos quien teclea
+  });
 
 
   // TODO 4 — Manejar la desconexión.

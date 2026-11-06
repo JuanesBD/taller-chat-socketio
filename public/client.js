@@ -47,6 +47,7 @@ formMensaje.addEventListener('submit', (e) => {
 // --- Avisar que estoy escribiendo ---------------------------
 inputMensaje.addEventListener('input', () => {
   // TODO 3 — Emitir 'escribiendo' con miNombre.
+  socket.emit('escribiendo', miNombre);
 });
 
 // --- Recibir del servidor -----------------------------------
@@ -70,6 +71,14 @@ socket.on('usuarios', (nombres) => {
 
 // TODO 7 — Escuchar 'escribiendo' (nombre) y mostrar
 //          "Fulano está escribiendo..." durante 1.5 segundos.
+let temporizador;
+socket.on('escribiendo', (nombre) => {
+  escribiendo.textContent = `${nombre} está escribiendo...`;
+  clearTimeout(temporizador);
+  temporizador = setTimeout(() => {
+    escribiendo.textContent = '';
+  }, 1500);
+});
 
 // --- Helpers (ya hechos, úsalos) ----------------------------
 
