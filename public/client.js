@@ -1,9 +1,3 @@
-// ============================================================
-//  TALLER: Chat en tiempo real con Socket.IO
-//  ARCHIVO: public/client.js  (lado cliente / navegador)
-// ============================================================
-
-// Abre la conexión WebSocket con el servidor.
 const socket = io();
 
 const login = document.getElementById('login');
@@ -18,13 +12,11 @@ const escribiendo = document.getElementById('escribiendo');
 
 let miNombre = '';
 
-// --- Entrar al chat -----------------------------------------
 formLogin.addEventListener('submit', (e) => {
   e.preventDefault();
   miNombre = inputNombre.value.trim();
   if (!miNombre) return;
 
-  // TODO 1 — Emitir el evento 'entrar' al servidor con miNombre.
   socket.emit('entrar', miNombre);
 
   login.classList.add('oculto');
@@ -32,45 +24,33 @@ formLogin.addEventListener('submit', (e) => {
   inputMensaje.focus();
 });
 
-// --- Enviar mensaje -----------------------------------------
 formMensaje.addEventListener('submit', (e) => {
   e.preventDefault();
   const texto = inputMensaje.value.trim();
   if (!texto) return;
 
-  // TODO 2 — Emitir el evento 'mensaje' con el texto.
   socket.emit('mensaje', texto);
 
   inputMensaje.value = '';
 });
 
-// --- Avisar que estoy escribiendo ---------------------------
 inputMensaje.addEventListener('input', () => {
-  // TODO 3 — Emitir 'escribiendo' con miNombre.
   socket.emit('escribiendo', miNombre);
 });
 
-// --- Recibir del servidor -----------------------------------
-
-// TODO 4 — Escuchar 'mensaje' y pintarlo con pintarMensaje(data).
 socket.on('mensaje', (data) => pintarMensaje(data));
 
-// TODO 5 — Escuchar 'sistema' (texto) y pintarlo con pintarSistema(texto).
 socket.on('sistema', (texto) => pintarSistema(texto));
 
-// TODO 6 — Escuchar 'usuarios' (array de nombres) y pintar la lista
-//          en #lista-usuarios.
 socket.on('usuarios', (nombres) => {
   listaUsuarios.innerHTML = '';
   nombres.forEach((nombre) => {
     const li = document.createElement('li');
-    li.textContent = nombre; // textContent, nunca innerHTML
+    li.textContent = nombre;
     listaUsuarios.appendChild(li);
   });
 });
 
-// TODO 7 — Escuchar 'escribiendo' (nombre) y mostrar
-//          "Fulano está escribiendo..." durante 1.5 segundos.
 let temporizador;
 socket.on('escribiendo', (nombre) => {
   escribiendo.textContent = `${nombre} está escribiendo...`;
@@ -79,8 +59,6 @@ socket.on('escribiendo', (nombre) => {
     escribiendo.textContent = '';
   }, 1500);
 });
-
-// --- Helpers (ya hechos, úsalos) ----------------------------
 
 function pintarMensaje({ autor, texto, hora }) {
   const li = document.createElement('li');
