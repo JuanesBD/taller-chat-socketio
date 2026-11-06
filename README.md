@@ -1,215 +1,119 @@
-# Taller: Chat en tiempo real con WebSockets y Socket.IO
+# Chat en tiempo real con Socket.IO
 
-**Duración estimada:** 2 a 3 horas
-**Prerrequisitos:** HTML, CSS y JavaScript básico. Node.js 18 o superior instalado.
-**Entrega:** repositorio de GitHub con el chat funcionando + capturas.
-
-> **Guía visual con la animación del flujo:** https://juanbonilla1305.github.io/taller-chat-socketio/
-
----
-
-## 1. ¿Por qué WebSockets?
-
-Con HTTP normal, el navegador **pregunta** y el servidor **responde**. El servidor
-nunca puede hablar primero. Para un chat eso es un problema: si Ana escribe,
-el navegador de Luis no se entera hasta que vuelva a preguntar.
-
-| | HTTP | WebSocket |
-|---|---|---|
-| Quién inicia | Siempre el cliente | Cualquiera de los dos |
-| Conexión | Se abre y se cierra en cada petición | Queda abierta |
-| Latencia | Alta para tiempo real | Baja (milisegundos) |
-| Uso típico | Cargar una página, un formulario | Chat, notificaciones, juegos, dashboards |
-
-Un WebSocket nace como una petición HTTP normal que pide un **upgrade** de protocolo.
-Si el servidor acepta, ese mismo socket TCP queda abierto en ambas direcciones.
-
-### ¿Y Socket.IO qué es?
-
-Socket.IO es una **librería encima** de WebSocket. Usa WebSocket cuando puede y,
-si la red lo bloquea, se cae de vuelta a HTTP long-polling sin que te enteres.
-Además te regala cosas que WebSocket puro no trae:
-
-- **Eventos con nombre**: `socket.emit('mensaje', ...)` en vez de mandar texto plano.
-- **Reconexión automática** cuando se cae la red.
-- **Salas (rooms)** para agrupar usuarios.
-- **Broadcast**: mandarle a todos, o a todos menos a uno.
+**Estudiante:** [Tu nombre completo]
+**Código:** [Tu código]
+**Materia / grupo:** [...]
+**Fecha de entrega:** [DD/MM/AAAA]
+**Repositorio:** https://github.com/JuanesBD/taller-chat-socketio
 
 ---
 
-## 2. Los 5 conceptos que necesitas
-
-```js
-// SERVIDOR
-io.on('connection', (socket) => { ... })  // alguien entró; socket = ESE cliente
-socket.on('evento', (data) => { ... })    // escuchar a ESE cliente
-socket.emit('evento', data)               // mandarle solo a ESE cliente
-socket.broadcast.emit('evento', data)     // a todos MENOS a ese cliente
-io.emit('evento', data)                   // a TODOS los conectados
-```
-
-```js
-// CLIENTE
-const socket = io();                      // abre la conexión
-socket.emit('evento', data)               // mandar al servidor
-socket.on('evento', (data) => { ... })    // escuchar al servidor
-```
-
-Eso es todo. El resto del taller es aplicar estas 5 líneas.
-
-### Flujo de un mensaje
-
-```
-Ana escribe "hola"
-   │
-   │  socket.emit('mensaje', 'hola')
-   ▼
-SERVIDOR  ── socket.on('mensaje') ──► agrega autor y hora
-   │
-   │  io.emit('mensaje', { autor:'Ana', texto:'hola', hora:'...' })
-   ▼
-Ana, Luis, Pedro  ── socket.on('mensaje') ──► lo pintan en pantalla
-```
-
-**Regla de oro:** el cliente manda solo el **texto**. El **autor** lo pone el servidor.
-Si confías en el autor que manda el cliente, cualquiera puede escribir haciéndose
-pasar por otro desde la consola del navegador.
-
----
-
-## 3. Montar el proyecto
+## 1. Cómo correr el proyecto
 
 ```bash
+git clone https://github.com/JuanesBD/taller-chat-socketio
 cd taller-chat-socketio
 npm install
-npm run dev
+npm start
 ```
 
-Abre **dos ventanas** del navegador en `http://localhost:3000` (una de ellas en
-modo incógnito) para probar el chat entre dos "personas".
+Luego abre `http://localhost:3000` en **dos ventanas** del navegador
+(una en modo incógnito) para chatear contigo mismo.
 
-> `npm run dev` usa `node --watch`: reinicia el servidor solo cuando guardas.
-
-### Qué hay en cada archivo
-
-```
-taller-chat-socketio/
-├── package.json
-├── PLANTILLA-README.md  ← la llenas y la entregas como tu README.md
-├── server.js            ← backend: Express + Socket.IO   (TODO 1 a 4)
-└── public/
-    ├── index.html       ← ya está hecho, no hay que tocarlo
-    ├── styles.css       ← ya está hecho
-    └── client.js        ← frontend: tu lógica            (TODO 1 a 7)
-```
-
-El `<script src="/socket.io/socket.io.js">` del HTML **no es un archivo tuyo**:
-Socket.IO lo sirve automáticamente cuando lo montas sobre el servidor HTTP.
+**Versión de Node usada:** v26.13.0
 
 ---
 
-## 4. Los retos (parte obligatoria)
+## 2. Eventos de Socket.IO que implementé
 
-Cada TODO está marcado en el código. Hazlos **en orden** y prueba después de cada uno.
-
-### Reto 1 — Entrar con un nombre
-- **Cliente:** al enviar el formulario de login, `socket.emit('entrar', miNombre)`.
-- **Servidor:** escucha `'entrar'`, guarda el nombre en el `Map` usando `socket.id`
-  como llave, y avisa a todos con `io.emit('sistema', ...)`.
-
-✅ **Prueba:** abre dos ventanas; al entrar la segunda, en la primera debe aparecer
-"Luis se unió al chat".
-
-### Reto 2 — Mandar y recibir mensajes
-- **Cliente:** `socket.emit('mensaje', texto)` al enviar el formulario.
-- **Servidor:** escucha `'mensaje'`, arma `{ autor, texto, hora }` y lo reenvía
-  con `io.emit('mensaje', ...)`.
-- **Cliente:** `socket.on('mensaje', pintarMensaje)`.
-
-✅ **Prueba:** escribe desde una ventana, aparece en las dos al instante.
-
-### Reto 3 — Lista de conectados
-- **Servidor:** cada vez que alguien entra o sale, `io.emit('usuarios', [...usuarios.values()])`.
-- **Cliente:** escucha `'usuarios'` y repinta el `<ul id="lista-usuarios">`.
-
-### Reto 4 — "Fulano está escribiendo..."
-- **Cliente:** en el evento `input` del campo de texto, `socket.emit('escribiendo')`.
-- **Servidor:** reenvía con `socket.broadcast.emit('escribiendo', nombre)`.
-  👉 Aquí **no** sirve `io.emit`: te verías a ti mismo escribiendo.
-- **Cliente:** muestra el texto y bórralo con un `setTimeout` de 1.5 segundos.
-
-### Reto 5 — Salir bien
-- **Servidor:** en `socket.on('disconnect')`, borra el usuario del `Map`,
-  avisa por `'sistema'` y manda la lista actualizada.
-
-✅ **Prueba:** cierra una ventana; en la otra debe desaparecer de la lista.
+| Evento | Lo emite | Lo escucha | Qué datos lleva | Quién lo recibe |
+|---|---|---|---|---|
+| `entrar` | Cliente | Servidor | `nombre` (string) | Solo el servidor |
+| `sistema` | Servidor | Cliente | `texto` (string): «X se unió al chat» / «X salió del chat» | Todos (`io.emit`) |
+| `mensaje` (cliente → servidor) | Cliente | Servidor | `texto` (string); el autor NO viaja | Solo el servidor |
+| `mensaje` (servidor → clientes) | Servidor | Cliente | `{ autor, texto, hora }` | Todos (`io.emit`) |
+| `usuarios` | Servidor | Cliente | Array de nombres conectados | Todos (`io.emit`) |
+| `escribiendo` (cliente → servidor) | Cliente | Servidor | `nombre` (el servidor lo ignora y usa `usuarios.get(socket.id)`) | Solo el servidor |
+| `escribiendo` (servidor → clientes) | Servidor | Cliente | `nombre` de quien teclea | Todos menos quien teclea (`socket.broadcast.emit`) |
+| `disconnect` | Socket.IO (automático) | Servidor | motivo de la desconexión | Solo el servidor |
 
 ---
 
-## 5. Retos extra (para subir nota)
+## 3. Retos obligatorios
 
-| # | Reto | Pista |
-|---|---|---|
-| 1 | No dejar entrar con un nombre ya usado | Revisa el `Map` antes de guardar; responde `socket.emit('error-nombre')` |
-| 2 | Historial: al entrar, ver los últimos 20 mensajes | Guarda un array en el servidor y mándalo con `socket.emit` (solo a quien entra) |
-| 3 | Salas por tema (#general, #random) | `socket.join('general')` y `io.to('general').emit(...)` |
-| 4 | Mensajes privados | `io.to(socketIdDestino).emit('privado', ...)` |
-| 5 | Confirmación de entrega | Callbacks de Socket.IO: `socket.emit('mensaje', texto, (ok) => ...)` |
-| 6 | Avatares con iniciales y color por usuario | Hash del nombre a color HSL |
-| 7 | Desplegar en Render o Railway | El puerto debe salir de `process.env.PORT` |
+- [x] **Reto 1** — Entrar con un nombre y avisar al resto
+- [x] **Reto 2** — Mandar y recibir mensajes en tiempo real
+- [x] **Reto 3** — Lista de conectados que se actualiza
+- [x] **Reto 4** — Indicador "está escribiendo"
+- [x] **Reto 5** — Desconexión limpia (sale de la lista y avisa)
 
----
-
-## 6. Trampas típicas (léelas antes de pedir ayuda)
-
-1. **`io is not defined` en el navegador** → falta el `<script src="/socket.io/socket.io.js">`,
-   o lo pusiste **después** de `client.js`.
-2. **El mensaje llega dos veces** → registraste `socket.on('mensaje', ...)` dentro
-   de otro listener, así que se registra de nuevo en cada evento. Los `socket.on`
-   del cliente van **una sola vez**, en el nivel superior del archivo.
-3. **Me veo a mí mismo "escribiendo"** → usaste `io.emit` en vez de `socket.broadcast.emit`.
-4. **Funciona en mi PC pero no entre dos computadores** → el cliente apunta a
-   `localhost`. Usa `io()` sin argumentos (toma el host de la página) y entra por la IP de red.
-5. **Se me quedan usuarios fantasma en la lista** → no implementaste `disconnect`,
-   o borraste del `Map` por nombre en vez de por `socket.id`.
-6. **`EADDRINUSE`** → ya tienes un servidor corriendo en el 3000. Ciérralo o cambia el puerto.
-7. **Inyección de HTML** → si pintas con `innerHTML = texto`, un compañero puede
-   mandar una etiqueta maliciosa. Por eso los helpers usan `textContent`.
+**¿Algo quedó a medias o no funciona?** Todo lo probé con dos clientes
+conectados al mismo tiempo (entrada, mensajes, escritura, salida). [Añade aquí
+cualquier cosa que notes al probarlo en el navegador.]
 
 ---
 
-## 7. Qué entregar
+## 4. Retos extra que hice
 
-1. Repositorio de GitHub público con el código (sin `node_modules`, usa `.gitignore`).
-2. Tu propio `README.md`: **usa el archivo `PLANTILLA-README.md`** que viene en el
-   proyecto. Renómbralo a `README.md` (reemplazando este enunciado) y llénalo.
-   Tiene la tabla de eventos, las preguntas de sustentación y un checklist final.
-3. Captura de pantalla con **dos o más** usuarios chateando.
-4. Mínimo **6 commits** con mensajes descriptivos (uno por reto, aproximadamente).
-
----
-
-## 8. Rúbrica (100 puntos)
-
-| Criterio | Puntos |
+| Reto extra | ¿Cómo lo resolví? |
 |---|---|
-| Reto 1 — Entrar con nombre + aviso de sistema | 15 |
-| Reto 2 — Mensajes en tiempo real entre varios clientes | 25 |
-| Reto 3 — Lista de conectados actualizada | 15 |
-| Reto 4 — Indicador "está escribiendo" con broadcast correcto | 10 |
-| Reto 5 — Desconexión limpia | 10 |
-| El autor del mensaje lo define el servidor (no el cliente) | 10 |
-| Commits, README propio y repo ordenado | 10 |
-| Al menos un reto extra funcionando | 5 |
+| Validación de entrada en el servidor | El nombre se recorta a 20 caracteres y el mensaje a 500; se ignoran vacíos y mensajes de quien aún no entró. |
 
 ---
 
-## 9. Preguntas para sustentar
+## 5. Capturas
 
-Responde en tu README; pueden preguntártelas en la sustentación.
+<!-- Sube las imágenes a /capturas y deja los enlaces. Obligatoria: dos usuarios chateando con la lista visible. -->
 
-1. ¿En qué se diferencia `socket.emit`, `socket.broadcast.emit` e `io.emit`?
-2. ¿Por qué el servidor no puede confiar en el nombre que manda el cliente?
-3. ¿Qué pasa con el `Map` de usuarios si el servidor se reinicia? ¿Cómo lo arreglarías?
-4. ¿Qué es el "fallback a long-polling" y cuándo entra en acción?
-5. Si hubiera 10.000 usuarios, ¿por qué `io.emit` en cada tecla presionada sería un problema?
+![Dos usuarios chateando](capturas/chat.png)
+
+![Lista de conectados](capturas/usuarios.png)
+
+---
+
+## 6. Lo que más me costó
+
+[Escribe aquí en dos o tres frases qué se te atravesó y cómo lo resolviste.]
+
+---
+
+## 7. Preguntas de sustentación
+
+**1. ¿En qué se diferencian `socket.emit`, `socket.broadcast.emit` e `io.emit`?**
+
+[Con tus palabras: `socket.emit` le manda solo a ese cliente; `socket.broadcast.emit` a todos menos a ese; `io.emit` a todos, incluido él.]
+
+**2. ¿Por qué el servidor no puede confiar en el nombre que manda el cliente?**
+
+[...]
+
+**3. ¿Qué pasa con el `Map` de usuarios si el servidor se reinicia? ¿Cómo lo arreglarías?**
+
+[...]
+
+**4. ¿Qué es el "fallback a long-polling" y cuándo entra en acción?**
+
+[...]
+
+**5. Si hubiera 10.000 usuarios, ¿por qué `io.emit` en cada tecla presionada sería un problema?**
+
+[...]
+
+---
+
+## 8. Antes de entregar — revisa esto
+
+- [x] `node_modules/` **no** está en el repo (revisa tu `.gitignore`)
+- [ ] El repo es **público** y el link de arriba abre
+- [x] Tengo **6 commits o más**, con mensajes que dicen qué hice
+- [ ] Clonando el repo en limpio, `npm install && npm start` funciona
+- [ ] Las capturas se ven en GitHub (no son links rotos)
+- [ ] Llené todos los `[...]` de este archivo
+- [x] Borré los comentarios de la plantilla
+
+---
+
+## Fuentes y ayuda
+
+- [Documentación oficial de Socket.IO](https://socket.io/docs/v4/)
+- Asistencia de Claude (IA) para implementar los TODO y probar el flujo con clientes simulados.
