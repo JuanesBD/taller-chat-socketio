@@ -59,6 +59,14 @@ socket.on('sistema', (texto) => pintarSistema(texto));
 
 // TODO 6 — Escuchar 'usuarios' (array de nombres) y pintar la lista
 //          en #lista-usuarios.
+socket.on('usuarios', (nombres) => {
+  listaUsuarios.innerHTML = '';
+  nombres.forEach((nombre) => {
+    const li = document.createElement('li');
+    li.textContent = nombre; // textContent, nunca innerHTML
+    listaUsuarios.appendChild(li);
+  });
+});
 
 // TODO 7 — Escuchar 'escribiendo' (nombre) y mostrar
 //          "Fulano está escribiendo..." durante 1.5 segundos.
