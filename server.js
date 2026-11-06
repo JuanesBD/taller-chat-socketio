@@ -52,7 +52,12 @@ io.on('connection', (socket) => {
   //   OJO: nunca confíes en el autor que manda el cliente;
   //        tómalo de `usuarios.get(socket.id)`.
   //
-  // socket.on('mensaje', (texto) => { ... });
+  socket.on('mensaje', (texto) => {
+    const autor = usuarios.get(socket.id); // el autor lo define el servidor
+    texto = String(texto || '').trim().slice(0, 500);
+    if (!autor || !texto) return;
+    io.emit('mensaje', { autor, texto, hora: new Date().toISOString() });
+  });
 
 
   // TODO 3 — Escuchar 'escribiendo' y avisar SOLO a los demás

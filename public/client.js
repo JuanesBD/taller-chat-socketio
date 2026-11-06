@@ -39,7 +39,7 @@ formMensaje.addEventListener('submit', (e) => {
   if (!texto) return;
 
   // TODO 2 — Emitir el evento 'mensaje' con el texto.
-  // socket.emit(...)
+  socket.emit('mensaje', texto);
 
   inputMensaje.value = '';
 });
@@ -52,7 +52,7 @@ inputMensaje.addEventListener('input', () => {
 // --- Recibir del servidor -----------------------------------
 
 // TODO 4 — Escuchar 'mensaje' y pintarlo con pintarMensaje(data).
-// socket.on('mensaje', (data) => { ... });
+socket.on('mensaje', (data) => pintarMensaje(data));
 
 // TODO 5 — Escuchar 'sistema' (texto) y pintarlo con pintarSistema(texto).
 socket.on('sistema', (texto) => pintarSistema(texto));
