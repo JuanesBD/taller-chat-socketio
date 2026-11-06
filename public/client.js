@@ -25,7 +25,7 @@ formLogin.addEventListener('submit', (e) => {
   if (!miNombre) return;
 
   // TODO 1 — Emitir el evento 'entrar' al servidor con miNombre.
-  // socket.emit(...)
+  socket.emit('entrar', miNombre);
 
   login.classList.add('oculto');
   chat.classList.remove('oculto');
@@ -55,6 +55,7 @@ inputMensaje.addEventListener('input', () => {
 // socket.on('mensaje', (data) => { ... });
 
 // TODO 5 — Escuchar 'sistema' (texto) y pintarlo con pintarSistema(texto).
+socket.on('sistema', (texto) => pintarSistema(texto));
 
 // TODO 6 — Escuchar 'usuarios' (array de nombres) y pintar la lista
 //          en #lista-usuarios.

@@ -37,7 +37,13 @@ io.on('connection', (socket) => {
   //   - Manda a todos la lista actualizada con el evento 'usuarios'
   //     usando [...usuarios.values()]
   //
-  // socket.on('entrar', (nombre) => { ... });
+  socket.on('entrar', (nombre) => {
+    nombre = String(nombre || '').trim().slice(0, 20);
+    if (!nombre) return;
+    usuarios.set(socket.id, nombre);
+    io.emit('sistema', `${nombre} se unió al chat`);
+    io.emit('usuarios', [...usuarios.values()]);
+  });
 
 
   // TODO 2 — Escuchar el evento 'mensaje' que manda el cliente.
